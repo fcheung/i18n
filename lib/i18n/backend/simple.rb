@@ -53,15 +53,17 @@ module I18n
         formats = translate(locale, :"#{type}.formats")
         format = formats[format.to_sym] if formats && formats[format.to_sym]
         # TODO raise exception unless format found?
-        format = format.to_s.dup
 
-        # TODO only translate these if the format string is actually present
-        # TODO check which format strings are present, then bulk translate then, then replace them
-        format.gsub!(/%a/, translate(locale, :"date.abbr_day_names")[object.wday])
-        format.gsub!(/%A/, translate(locale, :"date.day_names")[object.wday])
-        format.gsub!(/%b/, translate(locale, :"date.abbr_month_names")[object.mon])
-        format.gsub!(/%B/, translate(locale, :"date.month_names")[object.mon])
-        format.gsub!(/%p/, translate(locale, :"time.#{object.hour < 12 ? :am : :pm}")) if object.respond_to? :hour
+        format = format.to_s.gsub(/%[aAbBp]/) do |match|
+          case match
+          when '%a' then translate(locale, :"date.abbr_day_names")[object.wday]
+          when '%A' then translate(locale, :"date.day_names")[object.wday]
+          when '%b' then translate(locale, :"date.abbr_month_names")[object.mon]
+          when '%B' then translate(locale, :"date.month_names")[object.mon]
+          when '%p' then translate(locale, :"time.#{object.hour < 12 ? :am : :pm}") if object.respond_to? :hour
+          end
+        end  
+
         object.strftime(format)
       end
 
